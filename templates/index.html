@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brain Tumor Detection</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+      color: #343a40;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.5em;
+      color: #007bff;
+      animation: slideDown 1s ease-out;
+    }
+    p {
+      font-size: 1.1em;
+      margin-bottom: 1.5em;
+    }
+    @keyframes slideDown {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    /* Container */
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    /* File Input Customization */
+    input[type="file"] {
+      display: none;
+    }
+    .custom-file-upload {
+      border: 2px dashed #007bff;
+      display: inline-block;
+      padding: 20px 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 10px;
+      font-size: 1em;
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    .custom-file-upload:hover {
+      background: #007bff;
+      color: #fff;
+      transform: scale(1.05);
+    }
+    /* Preview Image */
+    #imagePreview {
+      display: none;
+      margin: 20px auto;
+      max-width: 100%;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    }
+    /* Buttons */
+    .btn {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background: #218838;
+      transform: translateY(-3px);
+    }
+    /* Loader Animation */
+    .loader {
+      display: none;
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #007bff;
+    }
+    .loader:after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #007bff;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Result Section */
+    .result {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      background: #f1f3f5;
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Chat Container */
+    .chat-container {
+      margin-top: 40px;
+      padding: 20px;
+      border: 1px solid #ced4da;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .chat-container h3 {
+      margin-top: 0;
+      color: #007bff;
+    }
+    .chat-box {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { width: 90%; }
+      h1 { font-size: 2em; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Brain Tumor Detection</h1>
+    <p>Upload an MRI scan to analyze for brain tumors using AI.</p>
+    
+    <!-- File Upload Form -->
+    <form id="upload-form" enctype="multipart/form-data">
+      <label for="fileInput" class="custom-file-upload">Choose an Image</label>
+      <input type="file" id="fileInput" name="file" accept=".png, .jpg, .jpeg" required>
+      <!-- Image Preview Element -->
+      <img id="imagePreview" src="#" alt="Image Preview">
+      <button type="submit" class="btn">Analyze Now</button>
+    </form>
+    
+    <!-- Loader -->
+    <div class="loader" id="analysis-loader">Analyzing... Please wait</div>
+    
+    <!-- Result Section -->
+    <div class="result" id="result-section">
+      <h3>Detection Result</h3>
+      <p><strong>Classification:</strong> <span id="classification_result"></span></p>
+      <p><strong>AI Advice:</strong> <span id="ai_advice"></span></p>
+      <p><strong>Risk Analysis:</strong> <span id="detailed_risk_analysis"></span></p>
+    </div>
+    
+    <!-- Chat Section -->
+    <div class="chat-container">
+      <h3>Ask AI About the MRI</h3>
+      <input type="text" id="chatInput" class="chat-box" placeholder="Type your question...">
+      <button class="btn" onclick="askAI()">Ask AI</button>
+      <div class="loader" id="chat-loader">AI is thinking...</div>
+      <p id="chat-response"></p>
+    </div>
+  </div>
+
+  <script>
+    // Show preview when an image is selected
+    document.getElementById("fileInput").addEventListener("change", function(event) {
+      const imagePreview = document.getElementById("imagePreview");
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = "block";
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  
+    document.getElementById("upload-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      document.getElementById("analysis-loader").style.display = "block";
+      document.getElementById("result-section").style.display = "none";
+  
+      const response = await fetch('/predict', { method: 'POST', body: formData });
+      const result = await response.json();
+  
+      document.getElementById("analysis-loader").style.display = "none";
+      document.getElementById("classification_result").textContent = result.classification_result;
+      document.getElementById("ai_advice").textContent = result.ai_advice;
+      document.getElementById("detailed_risk_analysis").textContent = result.detailed_risk_analysis;
+      document.getElementById("result-section").style.display = "block";
+    };
+    
+    async function askAI() {
+      const question = document.getElementById("chatInput").value.trim();
+      if (!question) return;
+      
+      document.getElementById("chat-loader").style.display = "block";
+      document.getElementById("chat-response").textContent = "";
+      
+      const response = await fetch('/ask', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      
+      const result = await response.json();
+      document.getElementById("chat-loader").style.display = "none";
+      
+      if (result.error) {
+        document.getElementById("chat-response").textContent = "❌ Error: " + result.error;
+      } else {
+        document.getElementById("chat-response").textContent = result.answer;
+      }
+    }
+  </script>
+</body>
+</html>
